@@ -1,4 +1,4 @@
-# Reflection-based Proof Tactic for Lattices in Coq
+# A Reflection-based Proof Tactic for Lattices in Coq
 
 This code is largely based on work by Daniel W. H. James and Ralf Hinze from
 their
