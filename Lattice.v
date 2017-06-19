@@ -606,17 +606,32 @@ Ltac lattice' :=
     (* pose env; *)
     change (logicDenote r1 env);
     apply logicNorm_sound;
-    vm_compute;
-    intuition idtac
+    let p := fresh "p" in
+    let Heqp := fresh "Heqp" in
+    remember (logicNorm _) as p eqn:Heqp;
+    vm_compute in Heqp;
+    rewrite Heqp; clear Heqp p
+    (* vm_compute; *)
+    (* intuition idtac *)
   end.
 
 Lemma example_3 `{LOSet A} : forall a b c : A,
-  a ≤ a ⊔ c ->
   b ≤ a ⊔ b ->
   a ⊓ c ≤ a ->
   a ⊓ b ≤ c ->
-  a ⊓ c ≤ c ⊔ b.
+  a ⊓ c ≤ b.
 Proof.
   intros a b c.
   lattice'.
+  simpl.
+  intuition.
 Admitted.
+
+Lemma median_inequality' `{LOSet A} : forall x y z : A,
+  (x ⊓ y) ⊔ (y ⊓ z) ⊔ (z ⊓ x) ≤ (x ⊔ y) ⊓ (y ⊔ z) ⊓ (z ⊔ x).
+Proof.
+  intros.
+  lattice'.
+  simpl.
+  intuition.
+Abort.
