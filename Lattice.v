@@ -13,7 +13,7 @@ Generalizable All Variables.
 Reserved Infix "⊓" (at level 40, left associativity).
 Reserved Infix "⊔" (at level 36, left associativity).
 
-Class Lattice (A : Set) := {
+Class Lattice (A : Type) := {
   meet : A -> A -> A where "x ⊓ y" := (meet x y);
   join : A -> A -> A where "x ⊔ y" := (join x y);
 
@@ -342,14 +342,115 @@ Next Obligation.
   apply Subterm_wf.
 Defined.
 
-Example speed_test :
-  ` (leq (Meet (Var 0) (Var 1), Join (Var 0) (Var 1))) = true.
-Proof. reflexivity. Qed.
-
 Notation "s ≲ t" := (leq (s, t)) (at level 30).
 
 Definition leq_correct {t u : Term} (Heq : ` (t ≲ u) = true) :
-  forall env, 〚t〛env ≤ 〚u〛env := proj2_sig (leq (t, u)) Heq.
+  forall env, 〚t〛env ≤ 〚u〛env := proj2_sig (t ≲ u) Heq.
+
+Inductive Logic : Set :=
+  | LLe   : Term  -> Term  -> Logic
+  | LAnd  : Logic -> Logic -> Logic
+  | LOr   : Logic -> Logic -> Logic
+  | LImpl : Logic -> Logic -> Logic.
+
+Fixpoint logicDenote (t : Logic) (env : nat -> A) : Prop :=
+  match t with
+  | LLe   x y => 〚x〛env ≤ 〚y〛env
+  | LAnd  x y => logicDenote x env /\ logicDenote y env
+  | LOr   x y => logicDenote x env \/ logicDenote y env
+  | LImpl x y => logicDenote x env -> logicDenote y env
+  end.
+
+Inductive AndOr {A B : Type} : Type :=
+  | AO_Terms : A -> B    -> AndOr
+  | AO_And   : AndOr -> AndOr -> AndOr
+  | AO_Or    : AndOr -> AndOr -> AndOr.
+
+Program Fixpoint normLe (p : Term * Term) {wf (R) p} : @AndOr Term Term :=
+  match p with
+  | (Meet a b, c) => AO_Or  (normLe (a, c)) (normLe (b, c))
+  | (Join a b, c) => AO_And (normLe (a, c)) (normLe (b, c))
+  | (c, Meet a b) => AO_And (normLe (c, a)) (normLe (c, b))
+  | (c, Join a b) => AO_Or  (normLe (c, a)) (normLe (c, b))
+  | (a, b) => AO_Terms a b
+  end.
+Next Obligation. intuition; inversion H2. Defined.
+Next Obligation. intuition; inversion H2. Defined.
+Next Obligation. intuition; inversion H2. Defined.
+Next Obligation.
+  apply measure_wf.
+  apply wf_symprod;
+  apply Subterm_wf.
+Defined.
+
+Fixpoint denoteAndOr (t : @AndOr Term Term) : Logic :=
+  match t with
+  | AO_Terms x y => LLe x y
+  | AO_And   x y => LAnd (denoteAndOr x) (denoteAndOr y)
+  | AO_Or    x y => LOr (denoteAndOr x) (denoteAndOr y)
+  end.
+
+Program Fixpoint logicNorm (t : Logic) : Logic :=
+  match t with
+  | LLe a b => denoteAndOr (normLe (a, b))
+
+  | LAnd  x y => LAnd (logicNorm x) (logicNorm y)
+  | LOr   x y => LOr  (logicNorm x) (logicNorm y)
+
+  | LImpl x y =>
+    match logicNorm y with
+    | LImpl y z => LImpl (LAnd (logicNorm x) y) z
+    | y => LImpl (logicNorm x) y
+    end
+  end.
+
+Theorem logicNorm_sound : forall x env,
+  logicDenote x env <->
+  logicDenote (logicNorm x) env.
+Proof.
+Admitted.
+
+(*
+Definition markVars (t : Term) (env : nat -> A) (f : nat -> bool) :
+  nat -> bool :=
+  let fix go t f :=
+      match t with
+      | Var x    => fun n => (x =? n) ||| f n
+      | Meet x y => go x (go y f) (* jww (2017-06-18): correct? *)
+      | Join x y => go x (go y f)
+      end in
+  go t (fun _ => false).
+
+Fixpoint markLogic (t : Logic) (env : nat -> A) : Prop :=
+  match t with
+  | LLe   x y => 〚x〛env ≤ 〚y〛env
+  | LAnd  x y => logicDenote x env /\ logicDenote y env
+  | LOr   x y => logicDenote x env \/ logicDenote y env
+  | LImpl x y => logicDenote x env -> logicDenote y env
+  end.
+
+Fixpoint logicCheck (t : Logic) (env : nat -> A) : Prop :=
+  match t with
+  | LLe   x y => 〚x〛env ≤ 〚y〛env
+  | LAnd  x y => logicDenote x env /\ logicDenote y env
+  | LOr   x y => logicDenote x env \/ logicDenote y env
+  | LImpl x y => logicDenote x env -> logicDenote y env
+  end.
+
+Program Fixpoint determine_truth (t : Logic) {struct t} :
+  { b : bool | b = true -> forall env, logicDenote t env } :=
+  match t with
+  | LLe   x y => leq (x, y)
+  | LAnd  x y => exist _ (` (determine_truth x) &&& ` (determine_truth y)) _
+  | LOr   x y => exist _ (` (determine_truth x) ||| ` (determine_truth y)) _
+  | LImpl x y => exist _ (if ` (determine_truth x)
+                          then ` (determine_truth y)
+                          else false) _
+  end.
+Next Obligation. destruct x0; intuition. Defined.
+Next Obligation. destruct x0; intuition. Defined.
+Next Obligation. destruct x0; intuition. Defined.
+*)
 
 End Lattice.
 
@@ -455,3 +556,67 @@ Proof. intros; lattice. Qed.
 Lemma median_inequality `{LOSet A} : forall x y z : A,
   (x ⊓ y) ⊔ (y ⊓ z) ⊔ (z ⊓ x) ≤ (x ⊔ y) ⊓ (y ⊔ z) ⊓ (z ⊔ x).
 Proof. intros; lattice. Qed.
+
+Ltac allVarsLogic xs e :=
+  match e with
+  | ?X1 ≤ ?X2 =>
+    let xs := allVars xs X1 in
+    allVars xs X2
+  | ?X1 /\ ?X2 =>
+    let xs := allVarsLogic xs X1 in
+    allVarsLogic xs X2
+  | ?X1 \/ ?X2 =>
+    let xs := allVarsLogic xs X1 in
+    allVarsLogic xs X2
+  | ~ ?X1 =>
+    allVarsLogic xs X1
+  | ?X1 -> ?X2 =>
+    let xs := allVarsLogic xs X1 in
+    allVarsLogic xs X2
+  end.
+
+Ltac reifyLogic env t :=
+  match t with
+  | ?X1 ≤ ?X2 =>
+    let r1 := reifyTerm env X1 in
+    let r2 := reifyTerm env X2 in
+    constr:(LLe r1 r2)
+  | ?X1 /\ ?X2 =>
+    let r1 := reifyLogic env X1 in
+    let r2 := reifyLogic env X2 in
+    constr:(LAnd r1 r2)
+  | ?X1 \/ ?X2 =>
+    let r1 := reifyLogic env X1 in
+    let r2 := reifyLogic env X2 in
+    constr:(LOr r1 r2)
+  | ?X1 -> ?X2 =>
+    let r1 := reifyLogic env X1 in
+    let r2 := reifyLogic env X2 in
+    constr:(LImpl r1 r2)
+  end.
+
+Ltac lattice' :=
+  match goal with
+  | [ |- ?P ] =>
+    let xs := allVarsLogic tt P in
+    let r1 := reifyLogic xs P in
+    let env := functionalize xs in
+    (* pose xs; *)
+    (* pose r1; *)
+    (* pose env; *)
+    change (logicDenote r1 env);
+    apply logicNorm_sound;
+    vm_compute;
+    intuition idtac
+  end.
+
+Lemma example_3 `{LOSet A} : forall a b c : A,
+  a ≤ a ⊔ c ->
+  b ≤ a ⊔ b ->
+  a ⊓ c ≤ a ->
+  a ⊓ b ≤ c ->
+  a ⊓ c ≤ c ⊔ b.
+Proof.
+  intros a b c.
+  lattice'.
+Admitted.
