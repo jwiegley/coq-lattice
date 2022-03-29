@@ -1,2 +1,3 @@
 /Lattice.v.d
-/Makefile.coq
+/Makefile.coq*
+/.Makefile.coq.*

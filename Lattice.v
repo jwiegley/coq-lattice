@@ -5,7 +5,6 @@ Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Lists.List.
 Require Import Coq.Relations.Relations.
 Require Import Coq.Classes.RelationClasses.
-Require Import Coq.quote.Quote.
 Require Import Coq.Wellfounded.Lexicographic_Product.
 
 Generalizable All Variables.
@@ -631,7 +630,5 @@ Lemma median_inequality' `{LOSet A} : forall x y z : A,
   (x ⊓ y) ⊔ (y ⊓ z) ⊔ (z ⊓ x) ≤ (x ⊔ y) ⊓ (y ⊔ z) ⊓ (z ⊔ x).
 Proof.
   intros.
-  lattice'.
-  simpl.
-  intuition.
-Abort.
+  lattice.
+Qed.
