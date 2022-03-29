@@ -212,12 +212,15 @@ Corollary Subterm_inv x y f : Subterm_inv_t x y f.
 Proof.
   pose proof Term_eq_dec.
   destruct f, t1, t2; simpl;
-  repeat destruct (Term_eq_dec _ _); subst;
-  try (rewrite e || rewrite <- e);
-  try (rewrite e0 || rewrite <- e0);
+  destruct (Term_eq_dec _ _); subst;
+  try destruct (Term_eq_dec _ _); subst;
+  try (rewrite e || rewrite <- e; clear e);
+  try (rewrite e0 || rewrite <- e0; clear e0);
   try congruence;
   try rewrite <- Eqdep_dec.eq_rect_eq_dec; eauto; simpl; intuition;
-  try rewrite <- Eqdep_dec.eq_rect_eq_dec; eauto; simpl; intuition.
+  try rewrite <- Eqdep_dec.eq_rect_eq_dec; eauto; simpl; intuition;
+  try (unfold eq_rect; destruct e0; intuition);
+  try (unfold eq_rect; destruct e; intuition).
 Qed.
 
 Program Instance Subterm_Irreflexive : Irreflexive Subterm.
