@@ -376,9 +376,15 @@ Program Fixpoint normLe (p : Term * Term) {wf (R) p} : @AndOr Term Term :=
   | (c, Join a b) => AO_Or  (normLe (c, a)) (normLe (c, b))
   | (a, b) => AO_Terms a b
   end.
-Next Obligation. intuition; inversion H2. Defined.
-Next Obligation. intuition; inversion H2. Defined.
-Next Obligation. intuition; inversion H2. Defined.
+Next Obligation.
+  intuition; match goal with [ H : _ = _ |- _ ] => inversion H end.
+Defined.
+Next Obligation.
+  intuition; match goal with [ H : _ = _ |- _ ] => inversion H end.
+Defined.
+Next Obligation.
+  intuition; match goal with [ H : _ = _ |- _ ] => inversion H end.
+Defined.
 Next Obligation.
   apply measure_wf.
   apply wf_symprod;
