@@ -1,3 +1,11 @@
 /Lattice.v.d
 /Makefile.coq*
 /.Makefile.coq.*
+*.vo
+*.vos
+*.vok
+*.glob
+*.aux
+/result
+/timing*.log
+/.perf-baseline.log

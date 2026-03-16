@@ -1,1 +1,2 @@
+-arg -w -arg +all,-unknown-warning,-deprecated-from-Coq,-class-declaration-default-mode,-failed-abstract-certificate,-deprecated-coq-env-var
 Lattice.v
