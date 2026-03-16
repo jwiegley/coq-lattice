@@ -2,24 +2,28 @@ opam-version: "2.0"
 maintainer: "johnw@newartisans.com"
 version: "dev"
 
-homepage: "https://github.com/jwiegley/category-theory"
-dev-repo: "git+https://github.com/jwiegley/category-theory.git"
-bug-reports: "https://github.com/jwiegley/category-theory/issues"
+homepage: "https://github.com/jwiegley/coq-lattice"
+dev-repo: "git+https://github.com/jwiegley/coq-lattice.git"
+bug-reports: "https://github.com/jwiegley/coq-lattice/issues"
 license: "BSD-3-Clause"
 
-synopsis: "An axiom-free formalization of category theory in Coq"
+synopsis: "A reflection-based proof tactic for lattices in Coq"
 description: """
-An axiom-free formalization of category theory in Coq for personal study and
-practical work.
+A certified decision procedure for lattice inequalities using Whitman's
+algorithm, implemented as a reflection-based tactic in Coq.
 """
 
 build: [make "JOBS=%{jobs}%" ]
 install: [make "install"]
 depends: [
-  "coq" {(>= "8.10" & < "8.16~") | (= "dev")}
+  "coq" {(>= "8.18" & < "9.1~") | (= "dev")}
 ]
 
 tags: [
+  "keyword:lattice"
+  "keyword:reflection"
+  "keyword:decision procedure"
+  "category:Mathematics/Algebra"
 ]
 authors: [
   "John Wiegley"
