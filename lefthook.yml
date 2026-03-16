@@ -1,0 +1,18 @@
+pre-commit:
+  parallel: true
+  commands:
+    nix-build:
+      glob: "*.{v,nix}"
+      run: nix build --no-warn-dirty 2>&1
+    nix-check:
+      glob: "*.{v,nix}"
+      run: nix flake check --no-warn-dirty 2>&1
+    format-check:
+      glob: "*.v"
+      run: make format-check
+    lint:
+      glob: "*.v"
+      run: make lint
+    admitted-check:
+      glob: "*.v"
+      run: make admitted-check
