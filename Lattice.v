@@ -1,17 +1,21 @@
-Require Import Coq.Program.Program.
-Require Import Coq.Bool.Bool.
-Require Import Coq.Arith.Bool_nat.
-Require Import Coq.Arith.PeanoNat.
-Require Import Coq.Lists.List.
-Require Import Coq.Relations.Relations.
-Require Import Coq.Classes.RelationClasses.
-Require Import Coq.Wellfounded.Lexicographic_Product.
+Set Warnings "-unknown-warning,-deprecated-from-Coq".
+From Coq Require Import Program.Program.
+From Coq Require Import Bool.Bool.
+From Coq Require Import Arith.PeanoNat.
+From Coq Require Import Logic.Eqdep_dec.
+From Coq Require Import Lists.List.
+From Coq Require Import Relations.Relations.
+From Coq Require Import Classes.RelationClasses.
+From Coq Require Import Wellfounded.Lexicographic_Product.
+Set Warnings "+deprecated-from-Coq,+unknown-warning".
 
 Generalizable All Variables.
 
 Reserved Infix "⊓" (at level 40, left associativity).
 Reserved Infix "⊔" (at level 36, left associativity).
 
+Local Set Warnings "-unknown-warning,-class-declaration-default-mode".
+#[universes(template=no)]
 Class Lattice (A : Type) := {
   meet : A -> A -> A where "x ⊓ y" := (meet x y);
   join : A -> A -> A where "x ⊔ y" := (join x y);
@@ -33,9 +37,9 @@ Infix "⊔" := join (at level 36, left associativity).
 Class Order (A : Set) := {
   ord : relation A;
 
-  reflexive :> Reflexive ord;
+  reflexive :: Reflexive ord;
   antisymmetric : forall {x y}, ord x y -> ord y x -> x = y;
-  transitive :> Transitive ord
+  transitive :: Transitive ord
 }.
 
 Infix "≤" := ord (at level 50).
@@ -44,6 +48,7 @@ Class LOSet {A : Set} `(@Order A) `(@Lattice A) := {
   meet_consistent : forall a b, a ≤ b <-> a = a ⊓ b;
   join_consistent : forall a b, a ≤ b <-> b = a ⊔ b
 }.
+Local Set Warnings "+class-declaration-default-mode,+unknown-warning".
 
 Section Lattice.
 
@@ -208,6 +213,7 @@ Proof.
   end.
 Defined.
 
+Local Set Warnings "-unknown-warning,-failed-abstract-certificate".
 Corollary Subterm_inv x y f : Subterm_inv_t x y f.
 Proof.
   pose proof Term_eq_dec.
@@ -217,11 +223,12 @@ Proof.
   try (rewrite e || rewrite <- e; clear e);
   try (rewrite e0 || rewrite <- e0; clear e0);
   try congruence;
-  try rewrite <- Eqdep_dec.eq_rect_eq_dec; eauto; simpl; intuition;
-  try rewrite <- Eqdep_dec.eq_rect_eq_dec; eauto; simpl; intuition;
-  try (unfold eq_rect; destruct e0; intuition);
-  try (unfold eq_rect; destruct e; intuition).
+  try rewrite <- Eqdep_dec.eq_rect_eq_dec; eauto; simpl; auto;
+  try rewrite <- Eqdep_dec.eq_rect_eq_dec; eauto; simpl; auto;
+  try (unfold eq_rect; destruct e0; auto);
+  try (unfold eq_rect; destruct e; auto).
 Qed.
+Local Set Warnings "+unknown-warning,+failed-abstract-certificate".
 
 Program Instance Subterm_Irreflexive : Irreflexive Subterm.
 Next Obligation.
@@ -291,6 +298,12 @@ Local Obligation Tactic :=
   program_simpl; try (constructor; constructor).
 
 Set Transparent Obligations.
+
+Local Definition nat_eq_bool (x y : nat) : {b : bool | if b then x = y else x <> y} :=
+  match Nat.eq_dec x y with
+  | left H  => exist _ true H
+  | right H => exist _ false H
+  end.
 
 (* Whitman's decision procedure. *)
 Program Fixpoint leq (p : Term * Term) {wf R p} :
@@ -363,6 +376,7 @@ Fixpoint logicDenote (t : Logic) (env : nat -> A) : Prop :=
   | LImpl x y => logicDenote x env -> logicDenote y env
   end.
 
+#[universes(template=no)]
 Inductive AndOr {A B : Type} : Type :=
   | AO_Terms : A -> B    -> AndOr
   | AO_And   : AndOr -> AndOr -> AndOr
